@@ -1,7 +1,8 @@
 {
+  "type": "module",
   "name": "prj1-sol",
   "version": "1.0.0",
-  "description": "",
+  "description": "Name:\t\tSandesh Sharma\r B-Number:\tB00817186\r Email:\t\tssharm53@binghamton.edu",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -2,5 +2,26 @@ Name:		Sandesh Sharma
 B-Number:	B00817186
 Email:		ssharm53@binghamton.edu
 
-Add text here as needed.
+Three Maps are created to Store user article and comments data.They are
+UserMap() => Stores user data.
+ArticleMap() => Stores article data.
+CommentMap() => Stores comment data.
 
+For Create Method
+
+Blog Object is Created and stored in Map. For userMap key, is externally generated user id and value is 
+corresponding blog object. For ArticleMap and Comment Map Key is randomly generated id and corresponding blog
+object is its value.The Object is created if it has unique id and returns the key of map(i.e id). Other wise Error 'EXISTS' is thrown.
+
+For Find Method
+The Corresponding Map is iterated to find the value. Returns array containing values if found. 
+
+For Remove Method
+All the dependencies of primary indexes to secondary indexes are checked before removing.For eg if the user is being removed than find method is used to match the authorid and commenterid for the corresponding userid.If matched with at least one,than the error is thrown.
+  If not a single match is found  than the object is removed from the corresponding map. 
+
+For Update Method
+The value in the map is changed according to the value given by the user.
+
+For Clear Method
+All Map values are cleared.

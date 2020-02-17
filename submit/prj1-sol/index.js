@@ -93,13 +93,13 @@ async function doLine(dataDir, blog, line, rl) {
       const cmd = args[0];
       const cmdInfo = COMMANDS[args[0]];
       if (!cmdInfo) {
-	console.error(`invalid command "${cmd}"`);
-	help(blog);
+		console.error(`invalid command "${cmd}"`);
+		help(blog);
       }
       else {
 	const result = await cmdInfo.handler(dataDir, blog, args.slice(1));
-	if (result && (result.length > 0 || Object.keys(result).length > 0)) {
-	  console.log(JSON.stringify(result, null, 2));
+	if (result && (result.length > 0 || Object.keys(result).length > 0)) {	
+	console.log(JSON.stringify(result, null, 2));
 	}
       }
     }
@@ -172,8 +172,8 @@ async function findHandler(dataDir, blog, args) {
       return results;
     }
     else {
-      return results.
-	map(result => Object.fromEntries(names.map(n => [n, result[n]])));
+      return results
+	 .map(result => Object.fromEntries(names.map(n => [n, result[n]])));
     }
   }
 }
