@@ -4,7 +4,7 @@ import mongo from 'mongodb';
 
 import BlogError from './blog-error.js';
 import Validator from './validator.js';
-
+import DbStore from './db-store.js';
 //debugger; //uncomment to force loading into chrome debugger
 
 /**
@@ -44,38 +44,56 @@ MISSING_FIELD:
 
 export default class Blog544 {
 
-  constructor(meta, options) {
+  constructor(meta, options,databaseStore) {
     //@TODO
     this.meta = meta;
     this.options = options;
-    this.validator = new Validator(meta);
+	this.databaseStore = databaseStore;
+    this.validator = new Validator(meta);	
   }
 
   /** options.dbUrl contains URL for mongo database */
   static async make(meta, options) {
-    //@TOD
-    return new Blog544(meta, options);
+	var categ = ["users","articles","comments"];
+	var cl = mongo.MongoClient;
+	const client = await cl.connect(options.dbUrl,MONGO_CONNECT_OPTIONS);
+    const db = await client.db('mdata');
+	const createIndexMeta = metaInfo(meta);
+	
+	 for(const category of categ){	//creates index for all the keys which is used for find
+	 for(const [index_name, index_value] of Object.entries(createIndexMeta[category].indexes)) {
+				if(index_name === 'creationTime'){
+					db.collection(category).createIndex({index_name:-1});
+				}
+				else{
+					db.collection(category).createIndex({index_name:1});
+				}										
+			}
+	 }
+	 const databaseStore = await DbStore.make(meta,options,client,db);
+    return new Blog544(meta, options,databaseStore);
   }
 
   /** Release all resources held by this blog.  Specifically, close
    *  any database connections.
    */
   async close() {
-    //@TODO
+    await this.databaseStore.close();
   }
 
   /** Remove all data for this blog */
   async clear() {
-    //@TODO
+		await this.databaseStore.clear();
   }
 
   /** Create a blog object as per createSpecs and 
    * return id of newly created object 
    */
   async create(category, createSpecs) {
-    const obj = this.validator.validate(category, 'create', createSpecs);
-    //@TODO
-  }
+    	const obj = this.validator.validate(category, 'create', createSpecs);
+		return (await this.databaseStore.create(category,createSpecs));
+	}
+
 
   /** Find blog objects from category which meets findSpec.  
    *
@@ -93,27 +111,50 @@ export default class Blog544 {
    *  
    */
   async find(category, findSpecs={}) {
-    const obj = this.validator.validate(category, 'find', findSpecs);
-    //@TODO
-    return [];
-  }
+	const obj = this.validator.validate(category, 'find', findSpecs);
+	const res = await this.databaseStore.find(category,findSpecs);
+    return res;
+	//return [];
+}
 
   /** Remove up to one blog object from category with id == rmSpecs.id. */
   async remove(category, rmSpecs) {
-    const obj = this.validator.validate(category, 'remove', rmSpecs);
-    //@TODO
+	const obj = this.validator.validate(category, 'remove', rmSpecs);
+	await this.databaseStore.remove(category,rmSpecs);
   }
 
   /** Update blog object updateSpecs.id from category as per
    *  updateSpecs.
    */
   async update(category, updateSpecs) {
-    const obj = this.validator.validate(category, 'update', updateSpecs);
-    //@TODO
-  }
-  
+	const obj = this.validator.validate(category, 'update', updateSpecs);
+	await this.databaseStore.update(category,updateSpecs);
+	}
 }
 
-const DEFAULT_COUNT = 5;
+/* This function is taken from the solution of project 1.
+ It changes meta into a more useful structure*/ 
+ function metaInfo(meta) {
+  const infos = {};
+  for (const [category, fields] of Object.entries(meta)) {
+    const indexPairs =
+      fields.filter(f => f.doIndex).
+      map(f => [ f.name, f.rel || 'eq' ]);
+    const indexes = Object.fromEntries(indexPairs);
+    const identifiesPairs =
+      fields.filter(f => f.identifies).
+      map(f => [ f.name, f.identifies ]);
+    const identifies = Object.fromEntries(identifiesPairs);
+    infos[category] = { fields, indexes, identifies, identifiedBy: [], };
+  }
+  for (const [category, info] of Object.entries(infos)) {
+    for (const [field, cat] of Object.entries(info.identifies)) {
+      infos[cat].identifiedBy.push([category, field]);
+    }
+  }
+  return infos;
+}
+
+
 
 const MONGO_CONNECT_OPTIONS = { useUnifiedTopology: true };
