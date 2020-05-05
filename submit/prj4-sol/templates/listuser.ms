@@ -7,6 +7,7 @@
   <body>
 	<h1>Users List</h1>
     	<p class="error"></p>
+	<input type="hidden" value="founduser" id="testuser"/>
     	<table>
 		<tbody>
 		<tr>

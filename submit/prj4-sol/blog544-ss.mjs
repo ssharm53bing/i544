@@ -50,6 +50,9 @@ async function listUserHandler(req,res,app){
 	const blog544web = await blog544ws.make("http://zdu.binghamton.edu:2345");
 	
 	var result = await blog544web.list("users", req.query);
+	if(result.prev === 0 ){
+		result.prev = '0';	
+	}
 	const html = doMustache(app,`listuser`,result);
 	res.send(html);
 }
@@ -69,18 +72,84 @@ async function searchUserHandler(req,res,app){
 			const html = doMustache(app,`searchuser`,{"Error":"One or more values must be specified"});
 			res.send(html);					
 		}
+		if(req.query.email!="" || req.query.creationTime!=""){
+			console.log("Inside Email");
+			var match = 0;
+			var outputerror={};
+			var emailError={};
+			var creationError={};
+			var emailadd = req.query.email;
+			if(emailadd!=""){	
+			const regex = /^\S+@\S+\.\S+$/;
+			 if(!emailadd.match(regex)){
+				console.log("Email Time Error");
+				match = 1;
+				console.log("Email not valid");
+				 queryObject["Emailerror"] = "bad value "+emailadd+" the user email fields must be of the 				form id@domain for users find";
+				}
+			}
+			if(req.query.creationTime!=""){
+				
+				console.log("Inside create time error");
+				var createTime = req.query.creationTime;
+				const newregex = /^\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$/;
+				if(!createTime.match(newregex)){
+				queryObject["Creationerror"] = "bad value "+createTime+"; the user creation time must be a 	valid 					 ISO-8601 date-time for users find";
+				 match = 1;
+				 console.log("not matched");
+				 
+			}
+		}
+			if(match===1){			
+				console.log("Searching uSers");	
+				const html = doMustache(app,`searchuser`,queryObject);
+				res.send(html);
+				res.end();
+			}			
+			
+		}
 		var result = await blog544web.list("users", queryObject);
+		console.log(result.next);
+		
 		if(Object.keys(result.users).length === 0){
+			console.log("result 0");
 			queryObject["Error"] = "No users found for specified query"
 			const html = doMustache(app,`searchuser`,queryObject);
 			res.send(html);
 			res.end();	
 		}
+		console.log("Sending Result");
+		console.log("Hello1");
+		if(result.prev === 0){
+			
+			result.prev = 1;		
+		}
 		const html = doMustache(app,`listuser`,result);
 		res.send(html);	
+		
+	} else if(req.query.submit==="checkuserexist"){
+		var queryObject={};
+		for(var key in req.query){
+			if(req.query[key]!="" && req.query[key]!="checkuserexist"){
+				queryObject[key] = req.query[key];	
+						
+			}	
+		}
+		var result = await blog544web.list("users", queryObject);
+		if(Object.keys(result.users).length === 0){
+			queryObject["Error"] = "No users found for specified query"
+			const html = doMustache(app,`searchuser`,queryObject);
+			res.send("usernotfound");
+			res.end();	
+		}else{
+			res.send("userfound");
+		}
+	}else{
+		const html = doMustache(app,`searchuser`,{});
+		console.log("Hello");
+		res.send(html);
 	}
-	const html = doMustache(app,`searchuser`,{});
-	res.send(html);
+
 }
 
 function doErrors(app) {
@@ -137,3 +206,9 @@ function setupTemplates(app) {
   }
 }
 
+function extend(dest,src){
+	for(var key in src){
+		dest[key] = src[key];	
+}
+	return dest;
+}
