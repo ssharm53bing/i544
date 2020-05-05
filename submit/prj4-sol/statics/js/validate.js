@@ -3,7 +3,6 @@
 function checkUser(){
 	var userid = document.getElementById('userId').value;
 	if(userid===""){
-		alert("Hello");
 	}else{
 		var xhttp = new XMLHttpRequest();
   		xhttp.onreadystatechange = function() {
